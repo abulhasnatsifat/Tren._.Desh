@@ -1,0 +1,2900 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Navbar, Footer } from '../components';
+import DefaultProfileImage from '../assets/profile/default-profile.png';
+import DefaultCoverImage from '../assets/cover/default-cover.png';
+
+// Social media icons (you can replace with actual icon library import)
+const SocialIcons = {
+    facebook: 'fab fa-facebook-f',
+    twitter: 'fab fa-twitter',
+    instagram: 'fab fa-instagram',
+    linkedin: 'fab fa-linkedin-in',
+    github: 'fab fa-github',
+    youtube: 'fab fa-youtube',
+    pinterest: 'fab fa-pinterest-p',
+    tiktok: 'fab fa-tiktok'
+};
+
+const Profile = () => {
+    const [activeTab, setActiveTab] = useState('profile');
+    
+    // State for profile details with social media links
+    const [profileData, setProfileData] = useState({
+        name: 'John Doe',
+        email: 'johndoe@example.com',
+        phone: '+1 (555) 123-4567',
+        registrationDate: 'January 15, 2023',
+        bio: 'Passionate tech enthusiast and online shopper',
+        gender: 'Male',
+        dateOfBirth: '1990-05-15',
+        profilePhoto: DefaultProfileImage,
+        coverPhoto: DefaultCoverImage,
+        socialLinks: {
+            facebook: 'https://facebook.com/johndoe',
+            twitter: 'https://twitter.com/johndoe',
+            instagram: 'https://instagram.com/johndoe',
+            linkedin: 'https://linkedin.com/in/johndoe',
+            github: 'https://github.com/johndoe',
+            youtube: '',
+            pinterest: '',
+            tiktok: ''
+        }
+    });
+
+    // Refs for file inputs
+    const profilePhotoInputRef = useRef(null);
+    const coverPhotoInputRef = useRef(null);
+
+    // State to manage edit mode and form validation
+    const [isEditing, setIsEditing] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
+    const [editedProfile, setEditedProfile] = useState({...profileData});
+
+    // Social media link validation
+    const validateSocialLink = (platform, url) => {
+        if (!url) return true; // Empty is allowed
+
+        const platformValidators = {
+            facebook: /^https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.]+\/?$/,
+            twitter: /^https?:\/\/(www\.)?twitter\.com\/[a-zA-Z0-9_]+\/?$/,
+            instagram: /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/,
+            linkedin: /^https?:\/\/(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/,
+            github: /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9-]+\/?$/,
+            youtube: /^https?:\/\/(www\.)?youtube\.com\/(c\/|channel\/|user\/)?[a-zA-Z0-9-]+\/?$/,
+            pinterest: /^https?:\/\/(www\.)?pinterest\.com\/[a-zA-Z0-9-]+\/?$/,
+            tiktok: /^https?:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_]+\/?$/
+        };
+
+        return platformValidators[platform].test(url);
+    };
+
+    // Update social link in edit mode
+    const handleSocialLinkChange = (platform, value) => {
+        setEditedProfile(prev => ({
+            ...prev,
+            socialLinks: {
+                ...prev.socialLinks,
+                [platform]: value
+            }
+        }));
+    };
+
+    // Render social media links
+    const renderSocialLinks = (links, editable = false) => {
+        return Object.entries(links)
+            .filter(([_, url]) => editable || url) // Show all in edit mode, only non-empty in view mode
+            .map(([platform, url]) => {
+                if (editable) {
+                    return (
+                        <div key={platform} className="mb-3">
+                            <div className="input-group">
+                                <span className="input-group-text">
+                                    <i className={`${SocialIcons[platform]} text-muted`}></i>
+                                </span>
+                                <input 
+                                    type="text" 
+                                    className={`form-control ${
+                                        url && !validateSocialLink(platform, url) 
+                                        ? 'is-invalid' 
+                                        : ''
+                                    }`}
+                                    placeholder={`${platform.charAt(0).toUpperCase() + platform.slice(1)} Profile URL`}
+                                    value={url}
+                                    onChange={(e) => handleSocialLinkChange(platform, e.target.value)}
+                                />
+                                {url && !validateSocialLink(platform, url) && (
+                                    <div className="invalid-feedback">
+                                        Invalid {platform} profile URL
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <a 
+                        key={platform} 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn btn-outline-secondary btn-sm me-2 mb-2"
+                    >
+                        <i className={`${SocialIcons[platform]} me-1`}></i>
+                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                    </a>
+                );
+            });
+    };
+
+    // Handle profile photo change
+    const handleProfilePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type and size
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            const maxSize = 5 * 1024 * 1024; // 5MB
+
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a valid image (JPEG, PNG, or GIF)');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert('File size should be less than 5MB');
+                return;
+            }
+
+            // Create a URL for the uploaded image
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Save the image to local storage or send to backend in a real app
+                localStorage.setItem('userProfilePhoto', reader.result);
+                
+                setEditedProfile(prev => ({
+                    ...prev,
+                    profilePhoto: reader.result
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Handle cover photo change
+    const handleCoverPhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type and size
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            const maxSize = 10 * 1024 * 1024; // 10MB for cover photo
+
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a valid image (JPEG, PNG, or GIF)');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                alert('File size should be less than 10MB');
+                return;
+            }
+
+            // Create a URL for the uploaded image
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Save the image to local storage or send to backend in a real app
+                localStorage.setItem('userCoverPhoto', reader.result);
+                
+                setEditedProfile(prev => ({
+                    ...prev,
+                    coverPhoto: reader.result
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Remove profile photo
+    const removeProfilePhoto = () => {
+        localStorage.removeItem('userProfilePhoto');
+        setEditedProfile(prev => ({
+            ...prev,
+            profilePhoto: DefaultProfileImage
+        }));
+    };
+
+    // Remove cover photo
+    const removeCoverPhoto = () => {
+        localStorage.removeItem('userCoverPhoto');
+        setEditedProfile(prev => ({
+            ...prev,
+            coverPhoto: DefaultCoverImage
+        }));
+    };
+
+    // Trigger file input clicks
+    const triggerProfilePhotoInput = () => {
+        profilePhotoInputRef.current.click();
+    };
+
+    const triggerCoverPhotoInput = () => {
+        coverPhotoInputRef.current.click();
+    };
+
+    // On component mount, check for saved photos
+    useEffect(() => {
+        const savedProfilePhoto = localStorage.getItem('userProfilePhoto');
+        const savedCoverPhoto = localStorage.getItem('userCoverPhoto');
+
+        setProfileData(prev => ({
+            ...prev,
+            ...(savedProfilePhoto && { profilePhoto: savedProfilePhoto }),
+            ...(savedCoverPhoto && { coverPhoto: savedCoverPhoto })
+        }));
+    }, []);
+
+    // Handle input changes
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditedProfile(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Save profile changes
+    const handleSaveProfile = () => {
+        if (validateForm()) {
+            setProfileData({...editedProfile});
+            setIsEditing(false);
+        }
+    };
+
+    // Cancel editing
+    const handleCancelEdit = () => {
+        setEditedProfile({...profileData});
+        setIsEditing(false);
+        setFormErrors({});
+    };
+
+    // Validation function
+    const validateForm = () => {
+        const errors = {};
+        
+        // Name validation
+        if (!editedProfile.name.trim()) {
+            errors.name = 'Name is required';
+        } else if (editedProfile.name.trim().length < 2) {
+            errors.name = 'Name must be at least 2 characters long';
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!editedProfile.email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!emailRegex.test(editedProfile.email)) {
+            errors.email = 'Invalid email format';
+        }
+
+        // Phone validation
+        const phoneRegex = /^\+1 \(\d{3}\) \d{3}-\d{4}$/;
+        if (!editedProfile.phone.trim()) {
+            errors.phone = 'Phone number is required';
+        } else if (!phoneRegex.test(editedProfile.phone)) {
+            errors.phone = 'Invalid phone format. Use +1 (555) 123-4567';
+        }
+
+        // Date of Birth validation
+        if (!editedProfile.dateOfBirth) {
+            errors.dateOfBirth = 'Date of Birth is required';
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    // Render profile details
+    const renderProfileDetails = () => {
+        if (isEditing) {
+            return (
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Edit Profile</h5>
+                        <form>
+                            {/* Cover Photo Section */}
+                            <div className="mb-4 position-relative">
+                                <input 
+                                    type="file" 
+                                    ref={coverPhotoInputRef}
+                                    style={{display: 'none'}}
+                                    accept="image/jpeg,image/png,image/gif"
+                                    onChange={handleCoverPhotoChange}
+                                />
+                                <img 
+                                    src={editedProfile.coverPhoto} 
+                                    alt="Cover" 
+                                    className="img-fluid w-100"
+                                    style={{
+                                        height: '250px', 
+                                        objectFit: 'cover', 
+                                        borderRadius: '10px'
+                                    }}
+                                />
+                                <div className="position-absolute top-0 end-0 m-3">
+                                    <button 
+                                        type="button"
+                                        className="btn btn-sm btn-light me-2"
+                                        onClick={triggerCoverPhotoInput}
+                                    >
+                                        <i className="fas fa-camera me-1"></i>Change Cover
+                                    </button>
+                                    {editedProfile.coverPhoto !== DefaultCoverImage && (
+                                        <button 
+                                            type="button"
+                                            className="btn btn-sm btn-danger"
+                                            onClick={removeCoverPhoto}
+                                        >
+                                            <i className="fas fa-trash me-1"></i>Remove
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Profile Photo Section - Overlaid on Cover Photo */}
+                                <div 
+                                    className="position-absolute" 
+                                    style={{
+                                        bottom: '-50px', 
+                                        left: '50px', 
+                                        zIndex: 10
+                                    }}
+                                >
+                                    <input 
+                                        type="file" 
+                                        ref={profilePhotoInputRef}
+                                        style={{display: 'none'}}
+                                        accept="image/jpeg,image/png,image/gif"
+                                        onChange={handleProfilePhotoChange}
+                                    />
+                                    <img 
+                                        src={editedProfile.profilePhoto} 
+                                        alt="Profile" 
+                                        className="rounded-circle border border-4 border-white"
+                                        style={{
+                                            width: '150px', 
+                                            height: '150px', 
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                    <button 
+                                        type="button"
+                                        className="btn btn-sm btn-light position-absolute bottom-0 end-0"
+                                        onClick={triggerProfilePhotoInput}
+                                    >
+                                        <i className="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Social Media Links Section */}
+                            <div className="mt-4">
+                                <h6 className="mb-3">Social Media Links</h6>
+                                {renderSocialLinks(editedProfile.socialLinks, true)}
+                            </div>
+
+                            {/* Add extra top margin to account for overlaid profile photo */}
+                            <div style={{marginTop: '80px'}}>
+                                <div className="mb-3">
+                                    <label htmlFor="name" className="form-label">Full Name</label>
+                                    <input 
+                                        type="text" 
+                                        className={`form-control ${formErrors.name ? 'is-invalid' : ''}`}
+                                        id="name"
+                                        name="name"
+                                        value={editedProfile.name}
+                                        onChange={handleInputChange}
+                                    />
+                                    {formErrors.name && (
+                                        <div className="invalid-feedback">{formErrors.name}</div>
+                                    )}
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="email" className="form-label">Email</label>
+                                    <input 
+                                        type="email" 
+                                        className={`form-control ${formErrors.email ? 'is-invalid' : ''}`}
+                                        id="email"
+                                        name="email"
+                                        value={editedProfile.email}
+                                        onChange={handleInputChange}
+                                    />
+                                    {formErrors.email && (
+                                        <div className="invalid-feedback">{formErrors.email}</div>
+                                    )}
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="phone" className="form-label">Phone Number</label>
+                                    <input 
+                                        type="tel" 
+                                        className={`form-control ${formErrors.phone ? 'is-invalid' : ''}`}
+                                        id="phone"
+                                        name="phone"
+                                        value={editedProfile.phone}
+                                        onChange={handleInputChange}
+                                        placeholder="+1 (555) 123-4567"
+                                    />
+                                    {formErrors.phone && (
+                                        <div className="invalid-feedback">{formErrors.phone}</div>
+                                    )}
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="dateOfBirth" className="form-label">Date of Birth</label>
+                                    <input 
+                                        type="date" 
+                                        className={`form-control ${formErrors.dateOfBirth ? 'is-invalid' : ''}`}
+                                        id="dateOfBirth"
+                                        name="dateOfBirth"
+                                        value={editedProfile.dateOfBirth}
+                                        onChange={handleInputChange}
+                                    />
+                                    {formErrors.dateOfBirth && (
+                                        <div className="invalid-feedback">{formErrors.dateOfBirth}</div>
+                                    )}
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="gender" className="form-label">Gender</label>
+                                    <select 
+                                        className="form-select" 
+                                        id="gender"
+                                        name="gender"
+                                        value={editedProfile.gender}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                        <option value="Prefer Not to Say">Prefer Not to Say</option>
+                                    </select>
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="bio" className="form-label">Bio</label>
+                                    <textarea 
+                                        className="form-control" 
+                                        id="bio"
+                                        name="bio"
+                                        value={editedProfile.bio}
+                                        onChange={handleInputChange}
+                                        rows="3"
+                                        placeholder="Tell us a bit about yourself"
+                                    ></textarea>
+                                </div>
+
+                                <div className="d-flex justify-content-between">
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-primary" 
+                                        onClick={handleSaveProfile}
+                                    >
+                                        Save Changes
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-outline-secondary" 
+                                        onClick={handleCancelEdit}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="card">
+                <div className="position-relative">
+                    {/* Cover Photo */}
+                    <img 
+                        src={profileData.coverPhoto} 
+                        alt="Cover" 
+                        className="img-fluid w-100"
+                        style={{
+                            height: '250px', 
+                            objectFit: 'cover', 
+                            borderRadius: '10px 10px 0 0'
+                        }}
+                    />
+
+                    {/* Profile Details Section */}
+                    <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <div className="d-flex align-items-center">
+                                {/* Profile Photo */}
+                                <img 
+                                    src={profileData.profilePhoto} 
+                                    alt="Profile" 
+                                    className="rounded-circle border border-3 border-white me-3"
+                                    style={{
+                                        width: '120px', 
+                                        height: '120px', 
+                                        objectFit: 'cover',
+                                        marginTop: '-80px'
+                                    }}
+                                />
+                                <div>
+                                    <h4 className="mb-1">{profileData.name}</h4>
+                                    <p className="text-muted mb-0">{profileData.email}</p>
+                                </div>
+                            </div>
+                            <button 
+                                className="btn btn-sm btn-outline-primary" 
+                                onClick={() => setIsEditing(true)}
+                            >
+                                <i className="fas fa-edit me-1"></i>Edit Profile
+                            </button>
+                        </div>
+
+                        {/* Social Media Links Section */}
+                        <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Social Media</h5>
+                                <button 
+                                    className="btn btn-sm btn-outline-primary" 
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    <i className="fas fa-edit me-1"></i>Edit
+                                </button>
+                            </div>
+                            <div className="d-flex flex-wrap">
+                                {renderSocialLinks(profileData.socialLinks)}
+                            </div>
+                        </div>
+
+                        {/* Rest of the profile details */}
+                        <div className="row">
+                            <div className="col-md-8">
+                                <p className="mb-2">
+                                    <strong>Bio:</strong> {profileData.bio}
+                                </p>
+                                <p className="mb-2">
+                                    <strong>Gender:</strong> {profileData.gender}
+                                </p>
+                                <p className="mb-2">
+                                    <strong>Date of Birth:</strong> {new Date(profileData.dateOfBirth).toLocaleDateString()}
+                                </p>
+                                <p className="mb-2">
+                                    <strong>Member Since:</strong> {profileData.registrationDate}
+                                </p>
+                            </div>
+                            <div className="col-md-4">
+                                <p className="mb-2">
+                                    <strong>Phone:</strong> {profileData.phone}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Enhanced order history with more details
+    const [orderHistory, setOrderHistory] = useState([
+        {
+            id: 'ORD-001',
+            date: '2023-02-10',
+            total: 129.99,
+            status: 'Delivered',
+            items: [
+                {
+                    name: 'Wireless Noise-Cancelling Headphones',
+                    quantity: 1,
+                    price: 129.99,
+                    image: 'https://example.com/headphones.jpg'
+                }
+            ],
+            shippingAddress: {
+                name: 'John Doe',
+                street: '123 Tech Lane',
+                city: 'Silicon Valley',
+                state: 'CA',
+                zipCode: '94000',
+                country: 'USA'
+            },
+            paymentMethod: {
+                type: 'Credit Card',
+                last4: '4567'
+            },
+            trackingNumber: 'SHIP-12345-XYZ'
+        },
+        {
+            id: 'ORD-002',
+            date: '2023-03-05',
+            total: 79.50,
+            status: 'Shipped',
+            items: [
+                {
+                    name: 'Smart Fitness Tracker',
+                    quantity: 1,
+                    price: 49.99,
+                    image: 'https://example.com/fitness-tracker.jpg'
+                },
+                {
+                    name: 'Wireless Earbuds',
+                    quantity: 1,
+                    price: 29.51,
+                    image: 'https://example.com/earbuds.jpg'
+                }
+            ],
+            shippingAddress: {
+                name: 'John Doe',
+                street: '456 Innovation Road',
+                city: 'Tech City',
+                state: 'CA',
+                zipCode: '90210',
+                country: 'USA'
+            },
+            paymentMethod: {
+                type: 'PayPal',
+                email: 'johndoe@example.com'
+            },
+            trackingNumber: 'SHIP-67890-ABC'
+        }
+    ]);
+
+    // Order filtering and sorting state
+    const [orderFilter, setOrderFilter] = useState({
+        status: 'All',
+        sortBy: 'date',
+        sortOrder: 'desc'
+    });
+
+    // Order details modal state
+    const [selectedOrder, setSelectedOrder] = useState(null);
+
+    // Filter and sort orders
+    const processedOrders = React.useMemo(() => {
+        return orderHistory
+            .filter(order => 
+                orderFilter.status === 'All' || 
+                order.status.toLowerCase() === orderFilter.status.toLowerCase()
+            )
+            .sort((a, b) => {
+                const modifier = orderFilter.sortOrder === 'asc' ? 1 : -1;
+                
+                if (orderFilter.sortBy === 'date') {
+                    return modifier * (new Date(a.date) - new Date(b.date));
+                }
+                
+                if (orderFilter.sortBy === 'total') {
+                    return modifier * (a.total - b.total);
+                }
+                
+                return 0;
+            });
+    }, [orderHistory, orderFilter]);
+
+    // Open order details modal
+    const openOrderDetails = (order) => {
+        setSelectedOrder(order);
+    };
+
+    // Render order details modal
+    const renderOrderDetailsModal = () => {
+        if (!selectedOrder) return null;
+
+        return (
+            <div className="modal" tabIndex="-1" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">Order Details: {selectedOrder.id}</h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={() => setSelectedOrder(null)}
+                            ></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="row">
+                                <div className="col-md-6">
+                                    <h6>Order Information</h6>
+                                    <p><strong>Order Date:</strong> {new Date(selectedOrder.date).toLocaleDateString()}</p>
+                                    <p><strong>Order Status:</strong> {selectedOrder.status}</p>
+                                    <p><strong>Tracking Number:</strong> {selectedOrder.trackingNumber}</p>
+                                </div>
+                                <div className="col-md-6">
+                                    <h6>Shipping Address</h6>
+                                    <p>
+                                        {selectedOrder.shippingAddress.name}<br />
+                                        {selectedOrder.shippingAddress.street}<br />
+                                        {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zipCode}<br />
+                                        {selectedOrder.shippingAddress.country}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <h6 className="mt-3">Order Items</h6>
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedOrder.items.map((item, index) => (
+                                        <tr key={index}>
+                                            <td>
+                                                <img 
+                                                    src={item.image} 
+                                                    alt={item.name} 
+                                                    style={{width: '50px', height: '50px', objectFit: 'cover', marginRight: '10px'}}
+                                                />
+                                                {item.name}
+                                            </td>
+                                            <td>{item.quantity}</td>
+                                            <td>${item.price.toFixed(2)}</td>
+                                            <td>${(item.quantity * item.price).toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="3" className="text-end"><strong>Total:</strong></td>
+                                        <td>${selectedOrder.total.toFixed(2)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <h6 className="mt-3">Payment Method</h6>
+                            <p>
+                                {selectedOrder.paymentMethod.type === 'Credit Card' 
+                                    ? `Credit Card (ending in ${selectedOrder.paymentMethod.last4})`
+                                    : `PayPal (${selectedOrder.paymentMethod.email})`
+                                }
+                            </p>
+                        </div>
+                        <div className="modal-footer">
+                            <button 
+                                type="button" 
+                                className="btn btn-secondary" 
+                                onClick={() => setSelectedOrder(null)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render order history section
+    const renderOrderHistory = () => {
+        return (
+            <div className="card">
+                <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="card-title">Order History</h5>
+                        <div className="d-flex align-items-center">
+                            {/* Status Filter */}
+                            <select 
+                                className="form-select form-select-sm me-2" 
+                                style={{width: 'auto'}}
+                                value={orderFilter.status}
+                                onChange={(e) => setOrderFilter(prev => ({
+                                    ...prev, 
+                                    status: e.target.value
+                                }))}
+                            >
+                                <option value="All">All Orders</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+
+                            {/* Sort Options */}
+                            <select 
+                                className="form-select form-select-sm me-2" 
+                                style={{width: 'auto'}}
+                                value={JSON.stringify({sortBy: orderFilter.sortBy, sortOrder: orderFilter.sortOrder})}
+                                onChange={(e) => {
+                                    const {sortBy, sortOrder} = JSON.parse(e.target.value);
+                                    setOrderFilter(prev => ({...prev, sortBy, sortOrder}));
+                                }}
+                            >
+                                <option value={JSON.stringify({sortBy: 'date', sortOrder: 'desc'})}>
+                                    Newest First
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'date', sortOrder: 'asc'})}>
+                                    Oldest First
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'total', sortOrder: 'desc'})}>
+                                    Highest Total
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'total', sortOrder: 'asc'})}>
+                                    Lowest Total
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {processedOrders.length === 0 ? (
+                        <div className="alert alert-info text-center">
+                            No orders found matching the current filter.
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {processedOrders.map((order) => (
+                                        <tr key={order.id}>
+                                            <td>{order.id}</td>
+                                            <td>{new Date(order.date).toLocaleDateString()}</td>
+                                            <td>${order.total.toFixed(2)}</td>
+                                            <td>
+                                                <span 
+                                                    className={`badge ${
+                                                        order.status === 'Delivered' ? 'bg-success' :
+                                                        order.status === 'Shipped' ? 'bg-primary' :
+                                                        order.status === 'Processing' ? 'bg-warning' :
+                                                        'bg-danger'
+                                                    }`}
+                                                >
+                                                    {order.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button 
+                                                    className="btn btn-sm btn-outline-info"
+                                                    onClick={() => openOrderDetails(order)}
+                                                >
+                                                    View Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Order Details Modal */}
+                {renderOrderDetailsModal()}
+            </div>
+        );
+    };
+
+    // Enhanced saved addresses with more details and management
+    const [savedAddresses, setSavedAddresses] = useState([
+        {
+            id: 'ADDR-001',
+            type: 'Home',
+            fullName: 'John Doe',
+            streetAddress: '123 Tech Innovation Drive',
+            apartment: 'Apt 4B',
+            city: 'San Francisco',
+            state: 'CA',
+            zipCode: '94105',
+            country: 'United States',
+            phoneNumber: '+1 (415) 555-1234',
+            isDefault: true,
+            coordinates: {
+                latitude: 37.7749,
+                longitude: -122.4194
+            }
+        },
+        {
+            id: 'ADDR-002',
+            type: 'Work',
+            fullName: 'John Doe',
+            streetAddress: '456 Silicon Valley Road',
+            apartment: 'Suite 200',
+            city: 'Palo Alto',
+            state: 'CA',
+            zipCode: '94301',
+            country: 'United States',
+            phoneNumber: '+1 (650) 555-5678',
+            isDefault: false,
+            coordinates: {
+                latitude: 37.4419,
+                longitude: -122.1430
+            }
+        }
+    ]);
+
+    // Address management state
+    const [addressModalMode, setAddressModalMode] = useState(null); // 'add', 'edit', or null
+    const [selectedAddress, setSelectedAddress] = useState(null);
+
+    // Address form validation
+    const validateAddress = (address) => {
+        const errors = {};
+
+        if (!address.fullName || address.fullName.trim().length < 2) {
+            errors.fullName = 'Full name is required';
+        }
+        
+        if (!address.streetAddress || address.streetAddress.trim().length < 5) {
+            errors.streetAddress = 'Street address is required';
+        }
+        
+        if (!address.city || address.city.trim().length < 2) {
+            errors.city = 'City is required';
+        }
+        
+        if (!address.state || address.state.trim().length < 2) {
+            errors.state = 'State is required';
+        }
+        
+        if (!address.zipCode || !/^\d{5}(-\d{4})?$/.test(address.zipCode)) {
+            errors.zipCode = 'Valid ZIP code is required';
+        }
+        
+        if (!address.phoneNumber || !/^\+1 \(\d{3}\) \d{3}-\d{4}$/.test(address.phoneNumber)) {
+            errors.phoneNumber = 'Valid phone number is required (format: +1 (XXX) XXX-XXXX)';
+        }
+        
+        return errors;
+    };
+
+    // Open address modal for adding or editing
+    const openAddressModal = (mode, address = null) => {
+        setAddressModalMode(mode);
+        setSelectedAddress(address || {
+            type: 'Home',
+            fullName: '',
+            streetAddress: '',
+            apartment: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: 'United States',
+            phoneNumber: '+1 (',
+            isDefault: false
+        });
+    };
+
+    // Save or update address
+    const saveAddress = () => {
+        const validationErrors = validateAddress(selectedAddress);
+        
+        if (Object.keys(validationErrors).length > 0) {
+            // TODO: Implement error display logic
+            console.error('Address validation errors:', validationErrors);
+            return;
+        }
+
+        if (addressModalMode === 'add') {
+            // Generate new unique ID
+            const newAddress = {
+                ...selectedAddress,
+                id: `ADDR-${Date.now()}`
+            };
+            setSavedAddresses(prev => [...prev, newAddress]);
+        } else if (addressModalMode === 'edit') {
+            setSavedAddresses(prev => 
+                prev.map(addr => 
+                    addr.id === selectedAddress.id ? selectedAddress : addr
+                )
+            );
+        }
+
+        // Close modal
+        setAddressModalMode(null);
+    };
+
+    // Set default address
+    const setDefaultAddress = (addressId) => {
+        setSavedAddresses(prev => 
+            prev.map(addr => ({
+                ...addr,
+                isDefault: addr.id === addressId
+            }))
+        );
+    };
+
+    // Delete address
+    const deleteAddress = (addressId) => {
+        setSavedAddresses(prev => 
+            prev.filter(addr => addr.id !== addressId)
+        );
+    };
+
+    // Render address modal
+    const renderAddressModal = () => {
+        if (!addressModalMode) return null;
+
+        return (
+            <div className="modal" tabIndex="-1" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">
+                                {addressModalMode === 'add' ? 'Add New Address' : 'Edit Address'}
+                            </h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={() => setAddressModalMode(null)}
+                            ></button>
+                        </div>
+                        <div className="modal-body">
+                            <form>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Address Type</label>
+                                        <select 
+                                            className="form-select"
+                                            value={selectedAddress.type}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                type: e.target.value
+                                            }))}
+                                        >
+                                            <option value="Home">Home</option>
+                                            <option value="Work">Work</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Full Name</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control"
+                                            value={selectedAddress.fullName}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                fullName: e.target.value
+                                            }))}
+                                            placeholder="Enter full name"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-8 mb-3">
+                                        <label className="form-label">Street Address</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control"
+                                            value={selectedAddress.streetAddress}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                streetAddress: e.target.value
+                                            }))}
+                                            placeholder="Street address"
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Apartment/Suite</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control"
+                                            value={selectedAddress.apartment}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                apartment: e.target.value
+                                            }))}
+                                            placeholder="Apt/Suite"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">City</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control"
+                                            value={selectedAddress.city}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                city: e.target.value
+                                            }))}
+                                            placeholder="City"
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">State</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control"
+                                            value={selectedAddress.state}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                state: e.target.value
+                                            }))}
+                                            placeholder="State"
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">ZIP Code</label>
+                                        <input 
+                                            type="text" 
+                                            className="form-control"
+                                            value={selectedAddress.zipCode}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                zipCode: e.target.value
+                                            }))}
+                                            placeholder="ZIP Code"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Country</label>
+                                        <select 
+                                            className="form-select"
+                                            value={selectedAddress.country}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                country: e.target.value
+                                            }))}
+                                        >
+                                            <option value="United States">United States</option>
+                                            <option value="Canada">Canada</option>
+                                            <option value="United Kingdom">United Kingdom</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Phone Number</label>
+                                        <input 
+                                            type="tel" 
+                                            className="form-control"
+                                            value={selectedAddress.phoneNumber}
+                                            onChange={(e) => setSelectedAddress(prev => ({
+                                                ...prev, 
+                                                phoneNumber: e.target.value
+                                            }))}
+                                            placeholder="+1 (XXX) XXX-XXXX"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-check mb-3">
+                                    <input 
+                                        type="checkbox" 
+                                        className="form-check-input"
+                                        id="defaultAddress"
+                                        checked={selectedAddress.isDefault}
+                                        onChange={(e) => setSelectedAddress(prev => ({
+                                            ...prev, 
+                                            isDefault: e.target.checked
+                                        }))}
+                                    />
+                                    <label className="form-check-label" htmlFor="defaultAddress">
+                                        Set as default address
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="modal-footer">
+                            <button 
+                                type="button" 
+                                className="btn btn-secondary" 
+                                onClick={() => setAddressModalMode(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-primary"
+                                onClick={saveAddress}
+                            >
+                                Save Address
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render saved addresses section
+    const renderSavedAddresses = () => {
+        return (
+            <div className="card">
+                <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="card-title">Saved Addresses</h5>
+                        <button 
+                            className="btn btn-primary btn-sm"
+                            onClick={() => openAddressModal('add')}
+                        >
+                            <i className="fas fa-plus me-1"></i>Add New Address
+                        </button>
+                    </div>
+
+                    {savedAddresses.length === 0 ? (
+                        <div className="alert alert-info text-center">
+                            No saved addresses. Click "Add New Address" to get started.
+                        </div>
+                    ) : (
+                        <div className="row">
+                            {savedAddresses.map((address) => (
+                                <div key={address.id} className="col-md-6 mb-3">
+                                    <div className={`card ${address.isDefault ? 'border-primary' : ''}`}>
+                                        <div className="card-body">
+                                            <div className="d-flex justify-content-between align-items-start">
+                                                <h6 className="card-title">
+                                                    {address.type} Address 
+                                                    {address.isDefault && (
+                                                        <span className="badge bg-primary ms-2">Default</span>
+                                                    )}
+                                                </h6>
+                                                <div className="dropdown">
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                        type="button" 
+                                                        data-bs-toggle="dropdown"
+                                                    >
+                                                        Actions
+                                                    </button>
+                                                    <ul className="dropdown-menu">
+                                                        <li>
+                                                            <button 
+                                                                className="dropdown-item" 
+                                                                onClick={() => openAddressModal('edit', address)}
+                                                            >
+                                                                <i className="fas fa-edit me-1"></i>Edit
+                                                            </button>
+                                                        </li>
+                                                        {!address.isDefault && (
+                                                            <li>
+                                                                <button 
+                                                                    className="dropdown-item" 
+                                                                    onClick={() => setDefaultAddress(address.id)}
+                                                                >
+                                                                    <i className="fas fa-star me-1"></i>Set as Default
+                                                                </button>
+                                                            </li>
+                                                        )}
+                                                        {savedAddresses.length > 1 && !address.isDefault && (
+                                                            <li>
+                                                                <button 
+                                                                    className="dropdown-item text-danger" 
+                                                                    onClick={() => deleteAddress(address.id)}
+                                                                >
+                                                                    <i className="fas fa-trash me-1"></i>Delete
+                                                                </button>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <p className="card-text">
+                                                {address.fullName}<br />
+                                                {address.streetAddress} {address.apartment}<br />
+                                                {address.city}, {address.state} {address.zipCode}<br />
+                                                {address.country}<br />
+                                                {address.phoneNumber}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Address Modal */}
+                {renderAddressModal()}
+            </div>
+        );
+    };
+
+    // Enhanced payment methods with advanced management
+    const [paymentMethods, setPaymentMethods] = useState([
+        {
+            id: 'CARD-001',
+            type: 'Credit Card',
+            cardNetwork: 'Visa',
+            lastFourDigits: '4567',
+            cardholderName: 'John Doe',
+            expirationDate: '12/2026',
+            isDefault: true,
+            billingAddress: {
+                fullName: 'John Doe',
+                streetAddress: '123 Tech Innovation Drive',
+                city: 'San Francisco',
+                state: 'CA',
+                zipCode: '94105',
+                country: 'United States'
+            }
+        },
+        {
+            id: 'CARD-002',
+            type: 'Debit Card',
+            cardNetwork: 'Mastercard',
+            lastFourDigits: '1234',
+            cardholderName: 'John Doe',
+            expirationDate: '05/2025',
+            isDefault: false,
+            billingAddress: {
+                fullName: 'John Doe',
+                streetAddress: '456 Silicon Valley Road',
+                city: 'Palo Alto',
+                state: 'CA',
+                zipCode: '94301',
+                country: 'United States'
+            }
+        },
+        {
+            id: 'PAYPAL-001',
+            type: 'PayPal',
+            email: 'johndoe@example.com',
+            isDefault: false
+        }
+    ]);
+
+    // Payment method management state
+    const [paymentModalMode, setPaymentModalMode] = useState(null); // 'add', 'edit', or null
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+
+    // Card network logos and validation
+    const cardNetworks = {
+        'Visa': '/assets/card-logos/visa.png',
+        'Mastercard': '/assets/card-logos/mastercard.png',
+        'American Express': '/assets/card-logos/amex.png',
+        'Discover': '/assets/card-logos/discover.png'
+    };
+
+    // Payment method validation
+    const validatePaymentMethod = (method) => {
+        const errors = {};
+
+        if (method.type === 'Credit Card' || method.type === 'Debit Card') {
+            // Card number validation
+            if (!method.cardNumber || !/^\d{16}$/.test(method.cardNumber.replace(/\s/g, ''))) {
+                errors.cardNumber = 'Valid 16-digit card number is required';
+            }
+
+            // Cardholder name validation
+            if (!method.cardholderName || method.cardholderName.trim().length < 3) {
+                errors.cardholderName = 'Cardholder name is required';
+            }
+
+            // Expiration date validation
+            const currentDate = new Date();
+            const [expMonth, expYear] = method.expirationDate.split('/').map(Number);
+            const expirationDate = new Date(expYear, expMonth - 1);
+            
+            if (!method.expirationDate || 
+                !/^\d{2}\/\d{4}$/.test(method.expirationDate) || 
+                expirationDate < currentDate) {
+                errors.expirationDate = 'Valid future expiration date is required (MM/YYYY)';
+            }
+
+            // CVV validation
+            if (!method.cvv || !/^\d{3,4}$/.test(method.cvv)) {
+                errors.cvv = 'Valid CVV is required';
+            }
+        } else if (method.type === 'PayPal') {
+            // PayPal email validation
+            if (!method.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(method.email)) {
+                errors.email = 'Valid email address is required';
+            }
+        }
+
+        return errors;
+    };
+
+    // Detect card network from card number
+    const detectCardNetwork = (cardNumber) => {
+        const cleanNumber = cardNumber.replace(/\s/g, '');
+        
+        if (/^4/.test(cleanNumber)) return 'Visa';
+        if (/^5[1-5]/.test(cleanNumber)) return 'Mastercard';
+        if (/^3[47]/.test(cleanNumber)) return 'American Express';
+        if (/^6(?:011|5)/.test(cleanNumber)) return 'Discover';
+        
+        return 'Unknown';
+    };
+
+    // Format card number
+    const formatCardNumber = (cardNumber) => {
+        const cleanNumber = cardNumber.replace(/\s/g, '');
+        return cleanNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
+    };
+
+    // Open payment method modal for adding or editing
+    const openPaymentMethodModal = (mode, method = null) => {
+        setPaymentModalMode(mode);
+        setSelectedPaymentMethod(method || {
+            type: 'Credit Card',
+            cardNetwork: 'Visa',
+            cardNumber: '',
+            lastFourDigits: '',
+            cardholderName: '',
+            expirationDate: '',
+            cvv: '',
+            isDefault: false,
+            billingAddress: {
+                fullName: '',
+                streetAddress: '',
+                city: '',
+                state: '',
+                zipCode: '',
+                country: 'United States'
+            }
+        });
+    };
+
+    // Save or update payment method
+    const savePaymentMethod = () => {
+        const validationErrors = validatePaymentMethod(selectedPaymentMethod);
+        
+        if (Object.keys(validationErrors).length > 0) {
+            // TODO: Implement error display logic
+            console.error('Payment method validation errors:', validationErrors);
+            return;
+        }
+
+        // Detect card network and last 4 digits
+        if (selectedPaymentMethod.type !== 'PayPal') {
+            selectedPaymentMethod.cardNetwork = detectCardNetwork(selectedPaymentMethod.cardNumber);
+            selectedPaymentMethod.lastFourDigits = selectedPaymentMethod.cardNumber.slice(-4);
+        }
+
+        if (paymentModalMode === 'add') {
+            // Generate new unique ID
+            const newPaymentMethod = {
+                ...selectedPaymentMethod,
+                id: `${selectedPaymentMethod.type === 'PayPal' ? 'PAYPAL' : 'CARD'}-${Date.now()}`
+            };
+            setPaymentMethods(prev => [...prev, newPaymentMethod]);
+        } else if (paymentModalMode === 'edit') {
+            setPaymentMethods(prev => 
+                prev.map(method => 
+                    method.id === selectedPaymentMethod.id ? selectedPaymentMethod : method
+                )
+            );
+        }
+
+        // Close modal
+        setPaymentModalMode(null);
+    };
+
+    // Set default payment method
+    const setDefaultPaymentMethod = (methodId) => {
+        setPaymentMethods(prev => 
+            prev.map(method => ({
+                ...method,
+                isDefault: method.id === methodId
+            }))
+        );
+    };
+
+    // Delete payment method
+    const deletePaymentMethod = (methodId) => {
+        setPaymentMethods(prev => 
+            prev.filter(method => method.id !== methodId)
+        );
+    };
+
+    // Render payment method modal
+    const renderPaymentMethodModal = () => {
+        if (!paymentModalMode) return null;
+
+        return (
+            <div className="modal" tabIndex="-1" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">
+                                {paymentModalMode === 'add' ? 'Add New Payment Method' : 'Edit Payment Method'}
+                            </h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={() => setPaymentModalMode(null)}
+                            ></button>
+                        </div>
+                        <div className="modal-body">
+                            <form>
+                                <div className="row mb-3">
+                                    <div className="col-md-6">
+                                        <label className="form-label">Payment Method Type</label>
+                                        <select 
+                                            className="form-select"
+                                            value={selectedPaymentMethod.type}
+                                            onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                ...prev, 
+                                                type: e.target.value
+                                            }))}
+                                        >
+                                            <option value="Credit Card">Credit Card</option>
+                                            <option value="Debit Card">Debit Card</option>
+                                            <option value="PayPal">PayPal</option>
+                                        </select>
+                                    </div>
+                                    {selectedPaymentMethod.type !== 'PayPal' && (
+                                        <div className="col-md-6">
+                                            <label className="form-label">Card Network</label>
+                                            <select 
+                                                className="form-select"
+                                                value={selectedPaymentMethod.cardNetwork}
+                                                onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                    ...prev, 
+                                                    cardNetwork: e.target.value
+                                                }))}
+                                            >
+                                                {Object.keys(cardNetworks).map(network => (
+                                                    <option key={network} value={network}>{network}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {selectedPaymentMethod.type !== 'PayPal' ? (
+                                    <>
+                                        <div className="row mb-3">
+                                            <div className="col-md-8">
+                                                <label className="form-label">Card Number</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control"
+                                                    value={selectedPaymentMethod.cardNumber}
+                                                    onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                        ...prev, 
+                                                        cardNumber: formatCardNumber(e.target.value)
+                                                    }))}
+                                                    placeholder="XXXX XXXX XXXX XXXX"
+                                                    maxLength="19"
+                                                />
+                                            </div>
+                                            <div className="col-md-4">
+                                                <label className="form-label">CVV</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control"
+                                                    value={selectedPaymentMethod.cvv}
+                                                    onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                        ...prev, 
+                                                        cvv: e.target.value.replace(/\D/g, '').slice(0, 4)
+                                                    }))}
+                                                    placeholder="CVV"
+                                                    maxLength="4"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="row mb-3">
+                                            <div className="col-md-6">
+                                                <label className="form-label">Cardholder Name</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control"
+                                                    value={selectedPaymentMethod.cardholderName}
+                                                    onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                        ...prev, 
+                                                        cardholderName: e.target.value
+                                                    }))}
+                                                    placeholder="Name on Card"
+                                                />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label">Expiration Date</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control"
+                                                    value={selectedPaymentMethod.expirationDate}
+                                                    onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                        ...prev, 
+                                                        expirationDate: e.target.value
+                                                            .replace(/\D/g, '')
+                                                            .slice(0, 6)
+                                                            .replace(/(\d{2})(\d{0,4})/, '$1/$2')
+                                                    }))}
+                                                    placeholder="MM/YYYY"
+                                                    maxLength="7"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="row mb-3">
+                                        <div className="col-md-12">
+                                            <label className="form-label">PayPal Email</label>
+                                            <input 
+                                                type="email" 
+                                                className="form-control"
+                                                value={selectedPaymentMethod.email}
+                                                onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                                    ...prev, 
+                                                    email: e.target.value
+                                                }))}
+                                                placeholder="Enter PayPal email"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="form-check mb-3">
+                                    <input 
+                                        type="checkbox" 
+                                        className="form-check-input"
+                                        id="defaultPaymentMethod"
+                                        checked={selectedPaymentMethod.isDefault}
+                                        onChange={(e) => setSelectedPaymentMethod(prev => ({
+                                            ...prev, 
+                                            isDefault: e.target.checked
+                                        }))}
+                                    />
+                                    <label className="form-check-label" htmlFor="defaultPaymentMethod">
+                                        Set as default payment method
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="modal-footer">
+                            <button 
+                                type="button" 
+                                className="btn btn-secondary" 
+                                onClick={() => setPaymentModalMode(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-primary"
+                                onClick={savePaymentMethod}
+                            >
+                                Save Payment Method
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render payment methods section
+    const renderPaymentMethods = () => {
+        return (
+            <div className="card">
+                <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="card-title">Payment Methods</h5>
+                        <button 
+                            className="btn btn-primary btn-sm"
+                            onClick={() => openPaymentMethodModal('add')}
+                        >
+                            <i className="fas fa-plus me-1"></i>Add Payment Method
+                        </button>
+                    </div>
+
+                    {paymentMethods.length === 0 ? (
+                        <div className="alert alert-info text-center">
+                            No payment methods. Click "Add Payment Method" to get started.
+                        </div>
+                    ) : (
+                        <div className="row">
+                            {paymentMethods.map((method) => (
+                                <div key={method.id} className="col-md-6 mb-3">
+                                    <div className={`card ${method.isDefault ? 'border-primary' : ''}`}>
+                                        <div className="card-body">
+                                            <div className="d-flex justify-content-between align-items-start">
+                                                <h6 className="card-title">
+                                                    {method.type} 
+                                                    {method.isDefault && (
+                                                        <span className="badge bg-primary ms-2">Default</span>
+                                                    )}
+                                                </h6>
+                                                <div className="dropdown">
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                        type="button" 
+                                                        data-bs-toggle="dropdown"
+                                                    >
+                                                        Actions
+                                                    </button>
+                                                    <ul className="dropdown-menu">
+                                                        <li>
+                                                            <button 
+                                                                className="dropdown-item" 
+                                                                onClick={() => openPaymentMethodModal('edit', method)}
+                                                            >
+                                                                <i className="fas fa-edit me-1"></i>Edit
+                                                            </button>
+                                                        </li>
+                                                        {!method.isDefault && (
+                                                            <li>
+                                                                <button 
+                                                                    className="dropdown-item" 
+                                                                    onClick={() => setDefaultPaymentMethod(method.id)}
+                                                                >
+                                                                    <i className="fas fa-star me-1"></i>Set as Default
+                                                                </button>
+                                                            </li>
+                                                        )}
+                                                        {paymentMethods.length > 1 && !method.isDefault && (
+                                                            <li>
+                                                                <button 
+                                                                    className="dropdown-item text-danger" 
+                                                                    onClick={() => deletePaymentMethod(method.id)}
+                                                                >
+                                                                    <i className="fas fa-trash me-1"></i>Delete
+                                                                </button>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            {method.type !== 'PayPal' ? (
+                                                <div className="d-flex align-items-center">
+                                                    <img 
+                                                        src={cardNetworks[method.cardNetwork]} 
+                                                        alt={method.cardNetwork} 
+                                                        style={{width: '50px', marginRight: '10px'}}
+                                                    />
+                                                    <div>
+                                                        <p className="card-text mb-1">
+                                                            {method.cardholderName}<br />
+                                                            {method.cardNetwork} **** {method.lastFourDigits}<br />
+                                                            Expires: {method.expirationDate}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="card-text">
+                                                    <i className="fab fa-paypal me-2"></i>
+                                                    {method.email}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Payment Method Modal */}
+                {renderPaymentMethodModal()}
+            </div>
+        );
+    };
+
+    // Enhanced wishlist with advanced management
+    const [wishlist, setWishlist] = useState([
+        {
+            id: 'PROD-001',
+            name: 'Wireless Noise-Cancelling Headphones',
+            brand: 'Sony',
+            category: 'Electronics',
+            price: 349.99,
+            originalPrice: 399.99,
+            discount: 12,
+            image: 'https://example.com/headphones.jpg',
+            inStock: true,
+            dateAdded: '2024-01-15',
+            sizes: ['One Size'],
+            colors: ['Black'],
+            rating: 4.5,
+            reviews: 256,
+            wishlistNote: 'Birthday gift wishlist item'
+        },
+        {
+            id: 'PROD-002',
+            name: 'Smart Fitness Tracker',
+            brand: 'Fitbit',
+            category: 'Wearables',
+            price: 129.99,
+            originalPrice: 179.99,
+            discount: 28,
+            image: 'https://example.com/fitness-tracker.jpg',
+            inStock: true,
+            dateAdded: '2024-02-10',
+            sizes: ['Small', 'Medium', 'Large'],
+            colors: ['Blue', 'Black', 'Pink'],
+            rating: 4.7,
+            reviews: 512,
+            wishlistNote: 'Fitness goals tracking'
+        },
+        {
+            id: 'PROD-003',
+            name: 'Vintage Leather Messenger Bag',
+            brand: 'Fossil',
+            category: 'Accessories',
+            price: 199.50,
+            originalPrice: 249.99,
+            discount: 20,
+            image: 'https://example.com/messenger-bag.jpg',
+            inStock: false,
+            dateAdded: '2024-03-05',
+            sizes: ['One Size'],
+            colors: ['Brown', 'Black'],
+            rating: 4.8,
+            reviews: 124,
+            wishlistNote: 'Professional work accessory'
+        }
+    ]);
+
+    // Wishlist management state
+    const [wishlistFilter, setWishlistFilter] = useState({
+        category: 'All',
+        sortBy: 'dateAdded',
+        sortOrder: 'desc',
+        priceRange: [0, 1000]
+    });
+
+    // Wishlist item modal state
+    const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
+    const [wishlistModalMode, setWishlistModalMode] = useState(null); // 'edit' or null
+
+    // Move item to cart
+    const moveToCart = (item) => {
+        // TODO: Implement actual cart addition logic
+        console.log('Moving to cart:', item);
+        // Remove from wishlist
+        setWishlist(prev => prev.filter(wishlistItem => wishlistItem.id !== item.id));
+    };
+
+    // Remove item from wishlist
+    const removeFromWishlist = (itemId) => {
+        setWishlist(prev => prev.filter(item => item.id !== itemId));
+    };
+
+    // Edit wishlist item note
+    const openWishlistItemModal = (item) => {
+        setSelectedWishlistItem(item);
+        setWishlistModalMode('edit');
+    };
+
+    // Save wishlist item note
+    const saveWishlistItemNote = () => {
+        setWishlist(prev => 
+            prev.map(item => 
+                item.id === selectedWishlistItem.id ? selectedWishlistItem : item
+            )
+        );
+        setWishlistModalMode(null);
+    };
+
+    // Filter and sort wishlist items
+    const processedWishlistItems = React.useMemo(() => {
+        return wishlist
+            .filter(item => 
+                (wishlistFilter.category === 'All' || item.category === wishlistFilter.category) &&
+                item.price >= wishlistFilter.priceRange[0] &&
+                item.price <= wishlistFilter.priceRange[1]
+            )
+            .sort((a, b) => {
+                const modifier = wishlistFilter.sortOrder === 'asc' ? 1 : -1;
+                
+                if (wishlistFilter.sortBy === 'dateAdded') {
+                    return modifier * (new Date(a.dateAdded) - new Date(b.dateAdded));
+                }
+                
+                if (wishlistFilter.sortBy === 'price') {
+                    return modifier * (a.price - b.price);
+                }
+                
+                if (wishlistFilter.sortBy === 'discount') {
+                    return modifier * (a.discount - b.discount);
+                }
+                
+                return 0;
+            });
+    }, [wishlist, wishlistFilter]);
+
+    // Render wishlist item modal
+    const renderWishlistItemModal = () => {
+        if (!wishlistModalMode) return null;
+
+        return (
+            <div className="modal" tabIndex="-1" style={{display: 'block', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">Edit Wishlist Item Note</h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={() => setWishlistModalMode(null)}
+                            ></button>
+                        </div>
+                        <div className="modal-body">
+                            <textarea 
+                                className="form-control" 
+                                rows="4"
+                                value={selectedWishlistItem.wishlistNote}
+                                onChange={(e) => setSelectedWishlistItem(prev => ({
+                                    ...prev,
+                                    wishlistNote: e.target.value
+                                }))}
+                                placeholder="Add a note about this item..."
+                            />
+                        </div>
+                        <div className="modal-footer">
+                            <button 
+                                type="button" 
+                                className="btn btn-secondary" 
+                                onClick={() => setWishlistModalMode(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-primary"
+                                onClick={saveWishlistItemNote}
+                            >
+                                Save Note
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render wishlist section
+    const renderWishlist = () => {
+        return (
+            <div className="card">
+                <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="card-title">Wishlist</h5>
+                        <div className="d-flex align-items-center">
+                            {/* Category Filter */}
+                            <select 
+                                className="form-select form-select-sm me-2" 
+                                style={{width: 'auto'}}
+                                value={wishlistFilter.category}
+                                onChange={(e) => setWishlistFilter(prev => ({
+                                    ...prev, 
+                                    category: e.target.value
+                                }))}
+                            >
+                                <option value="All">All Categories</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Wearables">Wearables</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Clothing">Clothing</option>
+                            </select>
+
+                            {/* Sort Options */}
+                            <select 
+                                className="form-select form-select-sm me-2" 
+                                style={{width: 'auto'}}
+                                value={JSON.stringify({sortBy: wishlistFilter.sortBy, sortOrder: wishlistFilter.sortOrder})}
+                                onChange={(e) => {
+                                    const {sortBy, sortOrder} = JSON.parse(e.target.value);
+                                    setWishlistFilter(prev => ({...prev, sortBy, sortOrder}));
+                                }}
+                            >
+                                <option value={JSON.stringify({sortBy: 'dateAdded', sortOrder: 'desc'})}>
+                                    Newest First
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'dateAdded', sortOrder: 'asc'})}>
+                                    Oldest First
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'price', sortOrder: 'desc'})}>
+                                    Highest Price
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'price', sortOrder: 'asc'})}>
+                                    Lowest Price
+                                </option>
+                                <option value={JSON.stringify({sortBy: 'discount', sortOrder: 'desc'})}>
+                                    Highest Discount
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {processedWishlistItems.length === 0 ? (
+                        <div className="alert alert-info text-center">
+                            Your wishlist is empty. Start adding items you love!
+                        </div>
+                    ) : (
+                        <div className="row">
+                            {processedWishlistItems.map((item) => (
+                                <div key={item.id} className="col-md-4 mb-4">
+                                    <div className="card h-100">
+                                        <img 
+                                            src={item.image} 
+                                            className="card-img-top" 
+                                            alt={item.name}
+                                            style={{
+                                                height: '200px', 
+                                                objectFit: 'cover', 
+                                                borderRadius: '10px'
+                                            }}
+                                        />
+                                        <div className="card-body">
+                                            <div className="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 className="card-title">{item.name}</h6>
+                                                    <p className="card-text text-muted small">
+                                                        {item.brand} | {item.category}
+                                                    </p>
+                                                </div>
+                                                <div className="text-end">
+                                                    <p className="card-text">
+                                                        <span className="fw-bold text-primary">
+                                                            ${item.price.toFixed(2)}
+                                                        </span>
+                                                        {item.discount > 0 && (
+                                                            <del className="text-muted ms-2">
+                                                                ${item.originalPrice.toFixed(2)}
+                                                            </del>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center mt-2">
+                                                <div>
+                                                    <span className="text-warning me-1">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <i 
+                                                                key={i} 
+                                                                className={`fas fa-star ${i < Math.floor(item.rating) ? 'text-warning' : 'text-muted'}`}
+                                                            ></i>
+                                                        ))}
+                                                    </span>
+                                                    <span className="text-muted small">
+                                                        ({item.reviews} reviews)
+                                                    </span>
+                                                </div>
+                                                <div className="dropdown">
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                        type="button" 
+                                                        data-bs-toggle="dropdown"
+                                                    >
+                                                        Actions
+                                                    </button>
+                                                    <ul className="dropdown-menu">
+                                                        <li>
+                                                            <button 
+                                                                className="dropdown-item" 
+                                                                onClick={() => openWishlistItemModal(item)}
+                                                            >
+                                                                <i className="fas fa-edit me-1"></i>Edit Note
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button 
+                                                                className="dropdown-item" 
+                                                                onClick={() => moveToCart(item)}
+                                                                disabled={!item.inStock}
+                                                            >
+                                                                <i className="fas fa-shopping-cart me-1"></i>Move to Cart
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button 
+                                                                className="dropdown-item text-danger" 
+                                                                onClick={() => removeFromWishlist(item.id)}
+                                                            >
+                                                                <i className="fas fa-trash me-1"></i>Remove
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            {item.wishlistNote && (
+                                                <div className="mt-2 p-2 bg-light rounded">
+                                                    <small className="text-muted">
+                                                        <i className="fas fa-sticky-note me-1"></i>
+                                                        {item.wishlistNote}
+                                                    </small>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Wishlist Item Modal */}
+                {renderWishlistItemModal()}
+            </div>
+        );
+    };
+
+    const [userReviews, setUserReviews] = useState([
+        {
+            id: 'REV-001',
+            productId: 'PROD-001',
+            productName: 'Wireless Noise-Cancelling Headphones',
+            productImage: 'https://example.com/headphones.jpg',
+            rating: 4.5,
+            review: 'Great sound quality and comfortable design. Battery life is impressive!',
+            date: '2024-02-15',
+            purchaseDate: '2024-01-20',
+            helpfulVotes: 12,
+            verifiedPurchase: true
+        },
+        {
+            id: 'REV-002',
+            productId: 'PROD-002',
+            productName: 'Smart Fitness Tracker',
+            productImage: 'https://example.com/fitness-tracker.jpg',
+            rating: 4,
+            review: 'Excellent fitness tracking features. App could use some improvements.',
+            date: '2024-02-10',
+            purchaseDate: '2024-01-15',
+            helpfulVotes: 5,
+            verifiedPurchase: true
+        }
+    ]);
+
+    const [reviewFilter, setReviewFilter] = useState({
+        sortBy: 'date',
+        order: 'desc'
+    });
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    const processedReviews = React.useMemo(() => {
+        let filteredReviews = [...userReviews];
+
+        // Sorting logic
+        filteredReviews.sort((a, b) => {
+            const modifier = reviewFilter.order === 'asc' ? 1 : -1;
+            
+            switch(reviewFilter.sortBy) {
+                case 'rating':
+                    return modifier * (b.rating - a.rating);
+                case 'product':
+                    return modifier * a.productName.localeCompare(b.productName);
+                default: // date
+                    return modifier * (new Date(b.date) - new Date(a.date));
+            }
+        });
+
+        // Pagination
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        
+        return filteredReviews.slice(startIndex, endIndex);
+    }, [userReviews, reviewFilter, currentPage]);
+
+    const handleEditReview = (review) => {
+        // Open modal or navigate to edit review page
+        console.log('Editing review:', review);
+    };
+
+    const handleDeleteReview = (reviewId) => {
+        // Confirm deletion and remove review
+        const confirmDelete = window.confirm('Are you sure you want to delete this review?');
+        if (confirmDelete) {
+            setUserReviews(userReviews.filter(review => review.id !== reviewId));
+        }
+    };
+
+    const [accountSettings, setAccountSettings] = useState({
+        profile: {
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD'
+        },
+        communication: {
+            newsletter: true,
+            marketingEmails: false,
+            productUpdates: true,
+            promotionalOffers: false
+        },
+        privacy: {
+            personalizedAds: false,
+            dataSharing: false,
+            activityTracking: false
+        },
+        security: {
+            twoFactorAuth: false,
+            loginNotifications: true,
+            passwordResetFrequency: 180, // days
+            activeDevices: [
+                {
+                    id: 'DEV-001',
+                    type: 'Desktop',
+                    browser: 'Chrome',
+                    lastActive: '2024-02-28T09:30:00+06:00',
+                    location: 'New York, USA',
+                    ipAddress: '192.168.1.100'
+                },
+                {
+                    id: 'DEV-002',
+                    type: 'Mobile',
+                    browser: 'Safari',
+                    lastActive: '2024-02-27T22:15:00+06:00',
+                    location: 'San Francisco, USA',
+                    ipAddress: '10.0.0.50'
+                }
+            ]
+        },
+        accessibility: {
+            highContrast: false,
+            fontSize: 'medium',
+            screenReader: false
+        }
+    });
+
+    const [editMode, setEditMode] = useState({
+        profile: false,
+        communication: false,
+        privacy: false,
+        security: false,
+        accessibility: false
+    });
+
+    const handleSettingToggle = (category, setting) => {
+        setAccountSettings(prev => ({
+            ...prev,
+            [category]: {
+                ...prev[category],
+                [setting]: !prev[category][setting]
+            }
+        }));
+    };
+
+    const handleProfileUpdate = (field, value) => {
+        setAccountSettings(prev => ({
+            ...prev,
+            profile: {
+                ...prev.profile,
+                [field]: value
+            }
+        }));
+    };
+
+    const handleSaveSettings = () => {
+        // Placeholder for backend sync
+        console.log('Saving account settings:', accountSettings);
+        // Potential API call to save settings
+        // Reset edit modes
+        setEditMode({
+            profile: false,
+            communication: false,
+            privacy: false,
+            security: false,
+            accessibility: false
+        });
+    };
+
+    const handleResetSettings = () => {
+        const confirmReset = window.confirm('Are you sure you want to reset all settings to default?');
+        if (confirmReset) {
+            // Reset to default settings
+            setAccountSettings({
+                profile: {
+                    language: 'en',
+                    timezone: 'UTC',
+                    currency: 'USD'
+                },
+                communication: {
+                    newsletter: true,
+                    marketingEmails: false,
+                    productUpdates: true,
+                    promotionalOffers: false
+                },
+                privacy: {
+                    personalizedAds: false,
+                    dataSharing: false,
+                    activityTracking: false
+                },
+                security: {
+                    twoFactorAuth: false,
+                    loginNotifications: true,
+                    passwordResetFrequency: 180,
+                    activeDevices: []
+                },
+                accessibility: {
+                    highContrast: false,
+                    fontSize: 'medium',
+                    screenReader: false
+                }
+            });
+        }
+    };
+
+    const renderReviews = () => {
+        return (
+            <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <h5 className="card-title mb-0">My Reviews</h5>
+                    <div className="d-flex">
+                        <select 
+                            className="form-select form-select-sm me-2" 
+                            value={reviewFilter.sortBy} 
+                            onChange={(e) => setReviewFilter({...reviewFilter, sortBy: e.target.value})}
+                        >
+                            <option value="date">Sort by Date</option>
+                            <option value="rating">Sort by Rating</option>
+                            <option value="product">Sort by Product</option>
+                        </select>
+                        <select 
+                            className="form-select form-select-sm" 
+                            value={reviewFilter.order} 
+                            onChange={(e) => setReviewFilter({...reviewFilter, order: e.target.value})}
+                        >
+                            <option value="desc">Newest First</option>
+                            <option value="asc">Oldest First</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="card-body">
+                    {processedReviews.length === 0 ? (
+                        <div className="text-center text-muted py-4">
+                            <i className="fas fa-comment-slash fa-3x mb-3"></i>
+                            <p>You haven't written any reviews yet.</p>
+                            <button className="btn btn-primary">Start Shopping</button>
+                        </div>
+                    ) : (
+                        processedReviews.map((review) => (
+                            <div key={review.id} className="review-item mb-4 p-3 border rounded">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <div className="d-flex align-items-center">
+                                        <img 
+                                            src={review.productImage} 
+                                            alt={review.productName} 
+                                            className="img-thumbnail me-3" 
+                                            style={{width: '80px', height: '80px', objectFit: 'cover'}} 
+                                        />
+                                        <div>
+                                            <h6 className="mb-1">{review.productName}</h6>
+                                            <p className="text-muted small mb-0">Purchased on {review.purchaseDate}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-warning">
+                                        {[...Array(5)].map((_, i) => (
+                                            <i 
+                                                key={i} 
+                                                className={`fas fa-star ${i < Math.floor(review.rating) ? 'text-warning' : 'text-muted'}`}
+                                            ></i>
+                                        ))}
+                                    </div>
+                                </div>
+                                <p className="text-muted small mb-2">Reviewed on {review.date}</p>
+                                <p className="mb-3">{review.review}</p>
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        {review.helpfulVotes > 0 && (
+                                            <span className="badge bg-success me-2">
+                                                {review.helpfulVotes} people found this helpful
+                                            </span>
+                                        )}
+                                        {review.verifiedPurchase && (
+                                            <span className="badge bg-info">Verified Purchase</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <button 
+                                            className="btn btn-sm btn-secondary me-2"
+                                            onClick={() => handleEditReview(review)}
+                                        >
+                                            <i className="fas fa-edit me-1"></i>Edit
+                                        </button>
+                                        <button 
+                                            className="btn btn-sm btn-outline-danger"
+                                            onClick={() => handleDeleteReview(review.id)}
+                                        >
+                                            <i className="fas fa-trash me-1"></i>Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+                {processedReviews.length > 0 && (
+                    <div className="card-footer d-flex justify-content-between align-items-center">
+                        <span className="text-muted">
+                            Total Reviews: {processedReviews.length}
+                        </span>
+                        <div className="pagination">
+                            <button 
+                                className="btn btn-sm btn-outline-secondary me-2" 
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(currentPage - 1)}
+                            >
+                                Previous
+                            </button>
+                            <button 
+                                className="btn btn-sm btn-outline-secondary" 
+                                disabled={processedReviews.length < itemsPerPage}
+                                onClick={() => setCurrentPage(currentPage + 1)}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderAccountSettings = () => {
+        return (
+            <div className="card">
+                <div className="card-header">
+                    <h5 className="card-title mb-0">Account Settings</h5>
+                </div>
+                <div className="card-body">
+                    {/* Profile Settings */}
+                    <div className="mb-4 border-bottom pb-3">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h6 className="mb-0">Profile Preferences</h6>
+                            <button 
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => setEditMode(prev => ({...prev, profile: !prev.profile}))}
+                            >
+                                {editMode.profile ? 'Cancel' : 'Edit'}
+                            </button>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-4 mb-2">
+                                <label className="form-label">Language</label>
+                                {editMode.profile ? (
+                                    <select 
+                                        className="form-select"
+                                        value={accountSettings.profile.language}
+                                        onChange={(e) => handleProfileUpdate('language', e.target.value)}
+                                    >
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                    </select>
+                                ) : (
+                                    <p className="form-control-plaintext">
+                                        {{'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German'}[accountSettings.profile.language]}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="col-md-4 mb-2">
+                                <label className="form-label">Timezone</label>
+                                {editMode.profile ? (
+                                    <select 
+                                        className="form-select"
+                                        value={accountSettings.profile.timezone}
+                                        onChange={(e) => handleProfileUpdate('timezone', e.target.value)}
+                                    >
+                                        <option value="UTC">UTC</option>
+                                        <option value="EST">Eastern Standard Time</option>
+                                        <option value="PST">Pacific Standard Time</option>
+                                        <option value="CET">Central European Time</option>
+                                    </select>
+                                ) : (
+                                    <p className="form-control-plaintext">{accountSettings.profile.timezone}</p>
+                                )}
+                            </div>
+                            <div className="col-md-4 mb-2">
+                                <label className="form-label">Currency</label>
+                                {editMode.profile ? (
+                                    <select 
+                                        className="form-select"
+                                        value={accountSettings.profile.currency}
+                                        onChange={(e) => handleProfileUpdate('currency', e.target.value)}
+                                    >
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="JPY">JPY (¥)</option>
+                                    </select>
+                                ) : (
+                                    <p className="form-control-plaintext">{accountSettings.profile.currency}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Communication Preferences */}
+                    <div className="mb-4 border-bottom pb-3">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h6 className="mb-0">Communication Preferences</h6>
+                            <button 
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => setEditMode(prev => ({...prev, communication: !prev.communication}))}
+                            >
+                                {editMode.communication ? 'Cancel' : 'Edit'}
+                            </button>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-6">
+                                <div className="form-check mb-2">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        checked={accountSettings.communication.newsletter}
+                                        onChange={() => handleSettingToggle('communication', 'newsletter')}
+                                        disabled={!editMode.communication}
+                                        id="newsletterCheck"
+                                    />
+                                    <label className="form-check-label" htmlFor="newsletterCheck">
+                                        Subscribe to Newsletter
+                                    </label>
+                                </div>
+                                <div className="form-check mb-2">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        checked={accountSettings.communication.productUpdates}
+                                        onChange={() => handleSettingToggle('communication', 'productUpdates')}
+                                        disabled={!editMode.communication}
+                                        id="productUpdatesCheck"
+                                    />
+                                    <label className="form-check-label" htmlFor="productUpdatesCheck">
+                                        Receive Product Updates
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="col-md-6">
+                                <div className="form-check mb-2">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        checked={accountSettings.communication.marketingEmails}
+                                        onChange={() => handleSettingToggle('communication', 'marketingEmails')}
+                                        disabled={!editMode.communication}
+                                        id="marketingEmailsCheck"
+                                    />
+                                    <label className="form-check-label" htmlFor="marketingEmailsCheck">
+                                        Marketing Emails
+                                    </label>
+                                </div>
+                                <div className="form-check mb-2">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        checked={accountSettings.communication.promotionalOffers}
+                                        onChange={() => handleSettingToggle('communication', 'promotionalOffers')}
+                                        disabled={!editMode.communication}
+                                        id="promotionalOffersCheck"
+                                    />
+                                    <label className="form-check-label" htmlFor="promotionalOffersCheck">
+                                        Promotional Offers
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="d-flex justify-content-between">
+                        <button 
+                            className="btn btn-primary"
+                            onClick={handleSaveSettings}
+                        >
+                            Save Changes
+                        </button>
+                        <button 
+                            className="btn btn-outline-danger"
+                            onClick={handleResetSettings}
+                        >
+                            Reset to Default
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderSavedAddresses = () => {
+        return (
+            <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <h5 className="card-title mb-0">Saved Addresses</h5>
+                    <button 
+                        className="btn btn-primary btn-sm" 
+                        onClick={() => {/* Open add address modal */}}
+                    >
+                        <i className="fas fa-plus me-1"></i>Add New Address
+                    </button>
+                </div>
+                <div className="card-body">
+                    {savedAddresses.length === 0 ? (
+                        <div className="text-center text-muted py-4">
+                            <i className="fas fa-map-marker-alt fa-3x mb-3"></i>
+                            <p>No saved addresses yet.</p>
+                            <button className="btn btn-outline-primary">Add Address</button>
+                        </div>
+                    ) : (
+                        savedAddresses.map((address, index) => (
+                            <div key={index} className="address-item mb-3 p-3 border rounded">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 className="mb-0">{address.label}</h6>
+                                    {address.isDefault && (
+                                        <span className="badge bg-success">Default</span>
+                                    )}
+                                </div>
+                                <p className="text-muted mb-1">
+                                    {address.street}, {address.city}, {address.state} {address.zipCode}
+                                </p>
+                                <p className="text-muted mb-1">{address.country}</p>
+                                <div className="mt-2">
+                                    <button 
+                                        className="btn btn-sm btn-outline-secondary me-2"
+                                        onClick={() => {/* Edit address */}}
+                                    >
+                                        <i className="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button 
+                                        className="btn btn-sm btn-outline-danger"
+                                        onClick={() => {/* Delete address */}}
+                                    >
+                                        <i className="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderPaymentMethods = () => {
+        return (
+            <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <h5 className="card-title mb-0">Payment Methods</h5>
+                    <button 
+                        className="btn btn-primary btn-sm" 
+                        onClick={() => {/* Open add payment method modal */}}
+                    >
+                        <i className="fas fa-plus me-1"></i>Add Payment Method
+                    </button>
+                </div>
+                <div className="card-body">
+                    {paymentMethods.length === 0 ? (
+                        <div className="text-center text-muted py-4">
+                            <i className="fas fa-credit-card fa-3x mb-3"></i>
+                            <p>No payment methods saved.</p>
+                            <button className="btn btn-outline-primary">Add Payment Method</button>
+                        </div>
+                    ) : (
+                        paymentMethods.map((method, index) => (
+                            <div key={index} className="payment-method-item mb-3 p-3 border rounded">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div className="d-flex align-items-center">
+                                        {method.type === 'visa' && <i className="fab fa-cc-visa fa-2x me-3 text-primary"></i>}
+                                        {method.type === 'mastercard' && <i className="fab fa-cc-mastercard fa-2x me-3 text-danger"></i>}
+                                        {method.type === 'amex' && <i className="fab fa-cc-amex fa-2x me-3 text-info"></i>}
+                                        <div>
+                                            <h6 className="mb-1">{method.type.toUpperCase()} **** {method.lastFourDigits}</h6>
+                                            <p className="text-muted small mb-0">
+                                                Expires {method.expiryMonth}/{method.expiryYear}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {method.isDefault && (
+                                        <span className="badge bg-success">Default</span>
+                                    )}
+                                </div>
+                                <div className="mt-2">
+                                    <button 
+                                        className="btn btn-sm btn-outline-secondary me-2"
+                                        onClick={() => {/* Edit payment method */}}
+                                    >
+                                        <i className="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button 
+                                        className="btn btn-sm btn-outline-danger"
+                                        onClick={() => {/* Delete payment method */}}
+                                    >
+                                        <i className="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderWishlist = () => {
+        return (
+            <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <h5 className="card-title mb-0">Wishlist</h5>
+                    <div>
+                        <button 
+                            className="btn btn-outline-secondary btn-sm me-2"
+                            onClick={() => {/* Sort wishlist */}}
+                        >
+                            <i className="fas fa-sort me-1"></i>Sort
+                        </button>
+                        <button 
+                            className="btn btn-primary btn-sm"
+                            onClick={() => {/* Continue shopping */}}
+                        >
+                            <i className="fas fa-shopping-cart me-1"></i>Continue Shopping
+                        </button>
+                    </div>
+                </div>
+                <div className="card-body">
+                    {wishlistItems.length === 0 ? (
+                        <div className="text-center text-muted py-4">
+                            <i className="fas fa-heart-broken fa-3x mb-3"></i>
+                            <p>Your wishlist is empty.</p>
+                            <button className="btn btn-outline-primary">Start Shopping</button>
+                        </div>
+                    ) : (
+                        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                            {wishlistItems.map((item) => (
+                                <div key={item.id} className="col">
+                                    <div className="card h-100 wishlist-item">
+                                        <img 
+                                            src={item.image} 
+                                            className="card-img-top" 
+                                            alt={item.name} 
+                                            style={{height: '200px', objectFit: 'cover'}}
+                                        />
+                                        <div className="card-body">
+                                            <h6 className="card-title">{item.name}</h6>
+                                            <p className="card-text text-muted">{item.brand}</p>
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="h5 mb-0">${item.price}</span>
+                                                <div>
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-primary me-2"
+                                                        onClick={() => {/* Add to cart */}}
+                                                    >
+                                                        <i className="fas fa-shopping-cart me-1"></i>Add to Cart
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        onClick={() => {/* Remove from wishlist */}}
+                                                    >
+                                                        <i className="fas fa-trash me-1"></i>Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="container-fluid profile-page">
+            <div className="row">
+                {/* Sidebar Navigation */}
+                <div className="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                    <div className="position-sticky pt-3">
+                        <ul className="nav flex-column">
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('profile')}
+                                >
+                                    <i className="fas fa-user me-2"></i>
+                                    Profile Details
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'edit-profile' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('edit-profile')}
+                                >
+                                    <i className="fas fa-user-edit me-2"></i>
+                                    Edit Profile
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'orders' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('orders')}
+                                >
+                                    <i className="fas fa-shopping-bag me-2"></i>
+                                    Order History
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'addresses' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('addresses')}
+                                >
+                                    <i className="fas fa-map-marker-alt me-2"></i>
+                                    Saved Addresses
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'payments' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('payments')}
+                                >
+                                    <i className="fas fa-credit-card me-2"></i>
+                                    Payment Methods
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'wishlist' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('wishlist')}
+                                >
+                                    <i className="fas fa-heart me-2"></i>
+                                    Wishlist
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'reviews' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('reviews')}
+                                >
+                                    <i className="fas fa-comment-dots me-2"></i>
+                                    My Reviews
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`} 
+                                    href="#"
+                                    onClick={() => setActiveTab('settings')}
+                                >
+                                    <i className="fas fa-cog me-2"></i>
+                                    Account Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Main Content Area */}
+                <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 className="h2">
+                            {activeTab === 'profile' && 'Profile Details'}
+                            {activeTab === 'edit-profile' && 'Edit Profile'}
+                            {activeTab === 'orders' && 'Order History'}
+                            {activeTab === 'addresses' && 'Saved Addresses'}
+                            {activeTab === 'payments' && 'Payment Methods'}
+                            {activeTab === 'wishlist' && 'Wishlist'}
+                            {activeTab === 'reviews' && 'My Reviews'}
+                            {activeTab === 'settings' && 'Account Settings'}
+                        </h1>
+                    </div>
+
+                    {/* Conditional Rendering Based on Active Tab */}
+                    {activeTab === 'profile' && renderProfileDetails()}
+                    {activeTab === 'edit-profile' && renderEditProfile()}
+                    {activeTab === 'orders' && renderOrderHistory()}
+                    {activeTab === 'addresses' && renderSavedAddresses()}
+                    {activeTab === 'payments' && renderPaymentMethods()}
+                    {activeTab === 'wishlist' && renderWishlist()}
+                    {activeTab === 'reviews' && renderReviews()}
+                    {activeTab === 'settings' && renderAccountSettings()}
+                </main>
+            </div>
+        </div>
+    );
+};
+
+export default Profile;

@@ -1,0 +1,77 @@
+.social-icons a {
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.social-icons a:hover {
+    transform: translateY(-3px);
+    opacity: 1;
+}
+
+.list-unstyled li a {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.list-unstyled li a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.list-unstyled li a:hover::after {
+    width: 100%;
+}
+
+.list-unstyled li a i {
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.list-unstyled li a:hover i {
+    transform: translateY(-3px);
+    opacity: 1;
+}
+
+.payment-icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.payment-icons svg {
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.payment-icons svg:hover {
+    transform: translateY(-3px);
+    opacity: 1;
+}
+
+.scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #007bff;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-3px);
+    opacity: 1;
+}

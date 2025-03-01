@@ -1,0 +1,16 @@
+export { default as Home } from './Home';
+export { default as Product } from './Product';
+export { default as Products } from '../components/Products';
+export { default as ProductDetail } from './ProductDetail';
+export { default as AboutPage } from './AboutPage';
+export { default as ContactPage } from './ContactPage';
+export { default as Cart } from './Cart';
+export { default as Login } from './Login';
+export { default as Register } from './Register';
+export { default as Checkout } from './Checkout';
+export { default as PageNotFound } from './PageNotFound';
+export { default as CategoriesPage } from './CategoriesPage';
+export { default as CategoryProductsPage } from './CategoryProductsPage';
+export { default as BrandsPage } from './BrandsPage';
+export { default as BrandProductsPage } from './BrandProductsPage';
+export { default as Profile } from './Profile';

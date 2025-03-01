@@ -1,0 +1,151 @@
+.translate-toggle-container {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 9999;
+}
+
+.translate-toggle-btn {
+  background-color: var(--toggle-bg);
+  border: 2px solid var(--toggle-border-color);
+  color: var(--toggle-icon-color);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.translate-toggle-btn:hover {
+  background-color: var(--toggle-hover-bg);
+  transform: scale(1.1);
+}
+
+.translate-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.translate-toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.translate-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.language-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.language-popup-content {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  width: 300px;
+  max-width: 90%;
+  text-align: center;
+  position: relative;
+}
+
+.language-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.language-popup-header h3 {
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.language-popup-close {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.language-popup-close:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.language-popup-content h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.language-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  background-color: #f4f4f4;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.language-option:hover {
+  background-color: #e0e0e0;
+}
+
+.language-option.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.language-option.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.language-flag {
+  font-size: 1.5em;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}

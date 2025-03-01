@@ -1,0 +1,93 @@
+/* Reset and Layout Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.page-content {
+  flex: 1 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove default margins and paddings from Bootstrap components */
+.container,
+.container-fluid,
+.row,
+.col,
+section {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Specific component adjustments */
+.hero {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100vh;
+}
+
+footer {
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  margin-top: auto;
+}
+
+/* Additional section spacing controls */
+.categories-page,
+.brands-page,
+.download-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+}
+
+/* Existing styles below */
+
+/* Add this to your existing CSS or create a new CSS file */
+.category-card {
+  transition: all 0.3s ease;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.category-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background-color: #f8f9fa;
+}
+
+.brand-card {
+  transition: all 0.3s ease;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.brand-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background-color: #f8f9fa;
+}
+
+/* Ensure full viewport height and sticky footer */
