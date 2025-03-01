@@ -5,7 +5,7 @@ This repository hosts the source code for our React-based Tren._.Desh website, f
 
 ## Demo
 
-https://react-ecommerce-shan.netlify.app/
+
 
 ## Features
 
@@ -19,9 +19,7 @@ https://react-ecommerce-shan.netlify.app/
 - Product Filters
 
 
-## Screenshots
 
-![App Screenshot](https://i.ibb.co/fQ293tm/image.png)
 
 
 
@@ -68,4 +66,4 @@ Just raise an issue, we will discuss it.
 
 ## Feedback
 
-If you have any feedback, please reach out to me [here](https://www.linkedin.com/in/muhammad-shan-full-stack-developer/)
+If you have any feedback, please reach out to me [here](https://www.linkedin.com/in/hasnatsifatofc/)
