@@ -4,7 +4,7 @@ This repository hosts the source code for our React-based Tren._.Desh website, f
 
 
 ## Demo
-
+https://trendesh.netlify.app/
 
 
 ## Features
@@ -28,7 +28,7 @@ This repository hosts the source code for our React-based Tren._.Desh website, f
 Clone the project
 
 ```bash
-  git clone https://github.com/Mshandev/React-Tren._.Desh
+  git clone https://github.com/abulhasnatsifat/TrenDesh.git
 ```
 
 Go to the project directory
