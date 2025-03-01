@@ -42,7 +42,7 @@ const Profile = () => {
             twitter: 'https://x.com/Hasnatsifatofc',
             instagram: 'https://www.instagram.com/hasnatsifatofc/',
             linkedin: 'linkedin.com/in/hasnatsifatofc/',
-            github: 'https://github.com/abulhasnatsifat/Hasnat-Sifat',
+            github: 'https://github.com/abulhasnatsifat', // Replaced the GitHub URL with the new URL
       
         }
     });
